@@ -179,7 +179,7 @@ namespace LegendaryConverters
             typeof(string)
         };
 
-        private static object? changeType(object? value, Type conversionType, IFormatProvider? provider, bool isIParsable)
+        private static object? changeType(object? value, Type conversionType, IFormatProvider? provider)
         {
             if ((object)conversionType == null)
             {
@@ -192,9 +192,6 @@ namespace LegendaryConverters
                     return Activator.CreateInstance(conversionType);
                 }
                 return null;
-            }
-            if (value is string && isIParsable)
-            {
             }
             if (!(value is IConvertible convertible))
             {
