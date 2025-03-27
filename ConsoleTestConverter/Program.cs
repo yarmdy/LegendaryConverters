@@ -1,6 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using LegendaryConverters;
 using System.Diagnostics;
+using System.Text.Json;
 
 Console.WriteLine("Hello, World!");
 
@@ -15,6 +16,7 @@ Dictionary<string, object?> dic = new Dictionary<string, object?> {
 };
 
 var obj = converter.Convert<TestClass>(dic);
+Console.WriteLine($"{JsonSerializer.Serialize(obj,options:new JsonSerializerOptions {WriteIndented=true })}");
 
 int maxcount = 100000;
 Stopwatch sw = Stopwatch.StartNew();
