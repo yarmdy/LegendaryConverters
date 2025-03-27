@@ -1,0 +1,38 @@
+﻿// See https://aka.ms/new-console-template for more information
+using LegendaryConverters;
+using System.Diagnostics;
+
+Console.WriteLine("Hello, World!");
+
+var converter = new DynamicDicToObjConverter();
+Dictionary<string, object?> dic = new Dictionary<string, object?> {
+    { "I1","1"},
+    { "I2","asd"},
+    { "B1","asd"},
+    { "B2","false"},
+    { "TS1","10:00"},
+    { "DT1","10:00"},
+};
+
+var obj = converter.Convert<TestClass>(dic);
+
+int maxcount = 1000000;
+Stopwatch sw = Stopwatch.StartNew();
+for (int i = 0; i < maxcount; i++)
+{
+    obj = converter.Convert<TestClass>(dic);
+}
+sw.Stop();
+
+Console.WriteLine($"转换{maxcount}次，用时，{sw.ElapsedMilliseconds}ms");
+
+public class TestClass{
+    public int I1 { get; set; }
+    public int? I2 { get; set; }
+
+    public bool B1 { get; set; }
+    public bool? B2 { get; set; }
+
+    public TimeSpan TS1 { get; set; }
+    public DateTime DT1 { get; set; }
+}

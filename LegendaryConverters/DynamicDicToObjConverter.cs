@@ -155,6 +155,233 @@ namespace LegendaryConverters
             }
             return obj;
         }
+
+        private static readonly Type[] ConvertTypes = new Type[]
+        {
+            null!,
+            typeof(object),
+            typeof(DBNull),
+            typeof(bool),
+            typeof(char),
+            typeof(sbyte),
+            typeof(byte),
+            typeof(short),
+            typeof(ushort),
+            typeof(int),
+            typeof(uint),
+            typeof(long),
+            typeof(ulong),
+            typeof(float),
+            typeof(double),
+            typeof(decimal),
+            typeof(DateTime),
+            typeof(object),
+            typeof(string)
+        };
+
+        private static object? changeType(object? value, Type conversionType, IFormatProvider? provider, bool isIParsable)
+        {
+            if ((object)conversionType == null)
+            {
+                throw new ArgumentNullException("conversionType");
+            }
+            if (value == null)
+            {
+                if (conversionType.IsValueType)
+                {
+                    return Activator.CreateInstance(conversionType);
+                }
+                return null;
+            }
+            if (value is string && isIParsable)
+            {
+            }
+            if (!(value is IConvertible convertible))
+            {
+                if (value.GetType() == conversionType)
+                {
+                    return value;
+                }
+                throw new InvalidCastException("无法转换类型，没有实现转化器接口");
+            }
+            if ((object)conversionType == ConvertTypes[3])
+            {
+                if (convertible is string str)
+                {
+                    if (bool.TryParse(str, out bool result))
+                    {
+                        return result;
+                    }
+                    return null;
+                }
+                return convertible.ToBoolean(provider);
+            }
+            if ((object)conversionType == ConvertTypes[4])
+            {
+                if (convertible is string str)
+                {
+                    if (char.TryParse(str, out char result))
+                    {
+                        return result;
+                    }
+                    return null;
+                }
+                return convertible.ToChar(provider);
+            }
+            if ((object)conversionType == ConvertTypes[5])
+            {
+                if (convertible is string str)
+                {
+                    if (sbyte.TryParse(str, out sbyte result))
+                    {
+                        return result;
+                    }
+                    return null;
+                }
+                return convertible.ToSByte(provider);
+            }
+            if ((object)conversionType == ConvertTypes[6])
+            {
+                if (convertible is string str)
+                {
+                    if (byte.TryParse(str, out byte result))
+                    {
+                        return result;
+                    }
+                    return null;
+                }
+                return convertible.ToByte(provider);
+            }
+            if ((object)conversionType == ConvertTypes[7])
+            {
+                if (convertible is string str)
+                {
+                    if (short.TryParse(str, out short result))
+                    {
+                        return result;
+                    }
+                    return null;
+                }
+                return convertible.ToInt16(provider);
+            }
+            if ((object)conversionType == ConvertTypes[8])
+            {
+                if (convertible is string str)
+                {
+                    if (ushort.TryParse(str, out ushort result))
+                    {
+                        return result;
+                    }
+                    return null;
+                }
+                return convertible.ToUInt16(provider);
+            }
+            if ((object)conversionType == ConvertTypes[9])
+            {
+                if (convertible is string str)
+                {
+                    if (int.TryParse(str, out int result))
+                    {
+                        return result;
+                    }
+                    return null;
+                }
+                return convertible.ToInt32(provider);
+            }
+            if ((object)conversionType == ConvertTypes[10])
+            {
+                if (convertible is string str)
+                {
+                    if (uint.TryParse(str, out uint result))
+                    {
+                        return result;
+                    }
+                    return null;
+                }
+                return convertible.ToUInt32(provider);
+            }
+            if ((object)conversionType == ConvertTypes[11])
+            {
+                if (convertible is string str)
+                {
+                    if (long.TryParse(str, out long result))
+                    {
+                        return result;
+                    }
+                    return null;
+                }
+                return convertible.ToInt64(provider);
+            }
+            if ((object)conversionType == ConvertTypes[12])
+            {
+                if (convertible is string str)
+                {
+                    if (ulong.TryParse(str, out ulong result))
+                    {
+                        return result;
+                    }
+                    return null;
+                }
+                return convertible.ToUInt64(provider);
+            }
+            if ((object)conversionType == ConvertTypes[13])
+            {
+                if (convertible is string str)
+                {
+                    if (float.TryParse(str, out float result))
+                    {
+                        return result;
+                    }
+                    return null;
+                }
+                return convertible.ToSingle(provider);
+            }
+            if ((object)conversionType == ConvertTypes[14])
+            {
+                if (convertible is string str)
+                {
+                    if (double.TryParse(str, out double result))
+                    {
+                        return result;
+                    }
+                    return null;
+                }
+                return convertible.ToDouble(provider);
+            }
+            if ((object)conversionType == ConvertTypes[15])
+            {
+                if (convertible is string str)
+                {
+                    if (decimal.TryParse(str, out decimal result))
+                    {
+                        return result;
+                    }
+                    return null;
+                }
+                return convertible.ToDecimal(provider);
+            }
+            if ((object)conversionType == ConvertTypes[16])
+            {
+                if (convertible is string str)
+                {
+                    if (DateTime.TryParse(str, out DateTime result))
+                    {
+                        return result;
+                    }
+                    return null;
+                }
+                return convertible.ToDateTime(provider);
+            }
+            if ((object)conversionType == ConvertTypes[18])
+            {
+                return convertible.ToString(provider);
+            }
+            if ((object)conversionType == ConvertTypes[1])
+            {
+                return value;
+            }
+            return convertible.ToType(conversionType, provider);
+        }
         #endregion
         public T Convert<T>(IDictionary<string, object?> dic) where T : class, new()
         {
