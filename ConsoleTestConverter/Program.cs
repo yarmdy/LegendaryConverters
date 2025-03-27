@@ -1,6 +1,8 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using LegendaryConverters;
 using System.Diagnostics;
+using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 
 Console.WriteLine("Hello, World!");
@@ -18,7 +20,7 @@ Dictionary<string, object?> dic = new Dictionary<string, object?> {
 var obj = converter.Convert<TestClass>(dic);
 Console.WriteLine($"{JsonSerializer.Serialize(obj,options:new JsonSerializerOptions {WriteIndented=true })}");
 
-int maxcount = 100000;
+int maxcount = 10_0000;
 Stopwatch sw = Stopwatch.StartNew();
 for (int i = 0; i < maxcount; i++)
 {
@@ -26,7 +28,8 @@ for (int i = 0; i < maxcount; i++)
 }
 sw.Stop();
 
-Console.WriteLine($"转换{maxcount}次，用时，{sw.ElapsedMilliseconds}ms");
+FormattableString message = $"转换 {maxcount:C} 次，用时 {sw.ElapsedMilliseconds} ms";
+Console.WriteLine(message.ToString(CultureInfo.GetCultureInfo("en-US")));
 
 public class TestClass{
     public int I1 { get; set; }
