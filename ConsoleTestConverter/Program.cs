@@ -7,16 +7,16 @@ Console.WriteLine("Hello, World!");
 var converter = new DynamicDicToObjConverter();
 Dictionary<string, object?> dic = new Dictionary<string, object?> {
     { "I1","1"},
-    { "I2","asd"},
-    { "B1","asd"},
+    { "I2","1"},
+    { "B1","true"},
     { "B2","false"},
-    { "TS1","10:00"},
+    { "TS1","100.10:00:00"},
     { "DT1","10:00"},
 };
 
 var obj = converter.Convert<TestClass>(dic);
 
-int maxcount = 1000000;
+int maxcount = 100000;
 Stopwatch sw = Stopwatch.StartNew();
 for (int i = 0; i < maxcount; i++)
 {
