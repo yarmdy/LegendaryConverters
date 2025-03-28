@@ -14,9 +14,11 @@ namespace LegendaryConverters
         #region 私有
         private ConcurrentDictionary<Type, Func<IDictionary<string, object?>, object>> _cacheFunc = new ConcurrentDictionary<Type, Func<IDictionary<string, object?>, object>>();
 
-        private static readonly MethodInfo ContainsKey = typeof(IDictionary<string, object?>).GetMethod("ContainsKey", BindingFlags.Public | BindingFlags.Instance)!;
+        private static readonly MethodInfo ContainsKey = typeof(IDictionary<string, object?>).GetMethod(nameof(IDictionary<string, object?>.ContainsKey), BindingFlags.Public | BindingFlags.Instance)!;
         private static readonly PropertyInfo Item = typeof(IDictionary<string, object?>).GetProperty("Item", BindingFlags.Public | BindingFlags.Instance)!;
-        
+        private static readonly MethodInfo convertMethod = typeof(Convert).GetMethod(nameof(System.Convert.ChangeType), BindingFlags.Public | BindingFlags.Static, null,new[] {typeof(object),typeof(Type) },null )!;
+        private static readonly MethodInfo toStringMethod = typeof(object).GetMethod(nameof(object.ToString), BindingFlags.Public | BindingFlags.Instance, null,new Type[] { },null )!;
+
         private object DynamicCompiledConvert(Type type, IDictionary<string, object?> dic)
         {
             return _cacheFunc.GetOrAdd(type, type =>
@@ -38,24 +40,65 @@ namespace LegendaryConverters
                 //System.Convert.GetTypeCode()
                 foreach (PropertyInfo prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(a => a.SetMethod != null & a.GetCustomAttribute<IgnoreConvertAttribute>(true) == null))
                 {
-                    var converter = TypeDescriptor.GetConverter(prop.PropertyType);
-                    var IsValidMethod = converter.GetType().GetMethod(nameof(converter.IsValid), BindingFlags.Public | BindingFlags.Instance, null, new[] { typeof(object)},null)!;
-                    var ConvertFormMethod = converter.GetType().GetMethod(nameof(converter.ConvertFrom), BindingFlags.Public | BindingFlags.Instance, null, new[] { typeof(object)},null)!;
-                    Expression converterExpression = Expression.Constant(converter);
+                    
                     Expression propName = Expression.Constant(prop.Name);
                     Expression propType = Expression.Constant(prop.PropertyType);
                     Expression dicIndex = Expression.MakeIndex(paramDic, Item, new Expression[] { propName });
+                    Type realType = Nullable.GetUnderlyingType(prop.PropertyType)?? prop.PropertyType;
+                    Expression realTypeExpression = Expression.Constant(realType);
 
-                    Expression ifthen = Expression.IfThen(
-                            Expression.AndAlso(
-                                Expression.Call(paramDic, ContainsKey, propName),
-                                Expression.NotEqual(Expression.Constant(null), dicIndex)
+                    var converter = TypeDescriptor.GetConverter(prop.PropertyType);
+                    var IsValidMethod = converter.GetType().GetMethod(nameof(converter.IsValid), BindingFlags.Public | BindingFlags.Instance, null, new[] { typeof(object) }, null)!;
+                    var ConvertFormMethod = converter.GetType().GetMethod(nameof(converter.ConvertFrom), BindingFlags.Public | BindingFlags.Instance, null, new[] { typeof(object) }, null)!;
+                    Expression converterExpression = Expression.Constant(converter);
+
+                    Expression elseExpression = Expression.IfThen(
+                        Expression.Call(converterExpression, IsValidMethod,dicIndex),
+                        Expression.Assign(
+                                Expression.Property(localResult, prop),
+                                Expression.Convert(Expression.Call(converterExpression, ConvertFormMethod, dicIndex), prop.PropertyType)
+                                )
+                        );
+                    if (realType == typeof(string))
+                    {
+                        elseExpression = Expression.IfThenElse(
+                        Expression.Call(converterExpression, IsValidMethod, dicIndex),
+                        Expression.Assign(
+                                Expression.Property(localResult, prop),
+                                Expression.Convert(Expression.Call(converterExpression, ConvertFormMethod, dicIndex), prop.PropertyType)
                                 ),
-                            Expression.IfThen(
-                                Expression.Call(converterExpression, IsValidMethod, new Expression[] {  dicIndex }),
-                                Expression.Assign(
-                                    Expression.Property(localResult, prop),
-                                    Expression.Convert(Expression.Call(converterExpression, ConvertFormMethod, new Expression[] { dicIndex }), prop.PropertyType))
+                        Expression.Assign(
+                                Expression.Property(localResult, prop),
+                                Expression.Call(dicIndex, toStringMethod)
+                                )
+                        );
+                    }
+                    if (realType.IsAssignableTo(typeof(IConvertible)))
+                    {
+                        elseExpression = Expression.IfThenElse(
+                            Expression.AndAlso(
+                                Expression.TypeIs(dicIndex,typeof(IConvertible)),
+                                Expression.Not(Expression.TypeIs(dicIndex,typeof(string)))
+                                ),
+                            Expression.Assign(
+                                Expression.Property(localResult, prop),
+                                Expression.Convert(Expression.Call(null, convertMethod,dicIndex, realTypeExpression), prop.PropertyType)
+                                ),
+                            elseExpression
+                            );
+                    }
+                    Expression ifthen = Expression.IfThen(
+                        Expression.AndAlso(
+                            Expression.Call(paramDic, ContainsKey, propName),
+                            Expression.NotEqual(Expression.Constant(null), dicIndex)
+                            ),
+                        Expression.IfThenElse(
+                            Expression.TypeIs(dicIndex, prop.PropertyType),
+                            Expression.Assign(
+                                Expression.Property(localResult, prop),
+                                Expression.Convert(dicIndex, prop.PropertyType)
+                                ),
+                            elseExpression
                             )
                         );
                     expressions.Add(ifthen);
@@ -96,13 +139,23 @@ namespace LegendaryConverters
                 {
                     continue;
                 }
+                Type realType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+                if (realType.IsAssignableTo(typeof(IConvertible)) && dicObj is IConvertible && dicObj is not string)
+                {
+                    prop.SetValue(obj, System.Convert.ChangeType(dicObj,realType));
+                    continue;
+                }
                 var converter = TypeDescriptor.GetConverter(prop.PropertyType);
-                if (!converter.IsValid(dicObj))
+                if (converter.IsValid(dicObj))
+                {
+                    prop.SetValue(obj, converter.ConvertFrom(dicObj));
+                    continue;
+                }
+                if (realType != typeof(string))
                 {
                     continue;
                 }
-                
-                prop.SetValue(obj, converter.ConvertFrom(dicObj));
+                prop.SetValue(obj, dicObj.ToString());
             }
             return obj;
         }
