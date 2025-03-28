@@ -38,7 +38,7 @@ namespace LegendaryConverters
                 };
 
                 //System.Convert.GetTypeCode()
-                foreach (PropertyInfo prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(a => a.SetMethod != null & a.GetCustomAttribute<IgnoreConvertAttribute>(true) == null))
+                foreach (PropertyInfo prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(a => a.SetMethod != null && a.GetCustomAttribute<IgnoreConvertAttribute>(true) == null))
                 {
                     
                     Expression propName = Expression.Constant(prop.Name);
@@ -128,7 +128,7 @@ namespace LegendaryConverters
                 throw new ArgumentException("没有公共无参的构造");
             }
             object obj = Activator.CreateInstance(type)!;
-            foreach (PropertyInfo prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(a => a.SetMethod != null & a.GetCustomAttribute<IgnoreConvertAttribute>(true) == null))
+            foreach (PropertyInfo prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(a => a.SetMethod != null && a.GetCustomAttribute<IgnoreConvertAttribute>(true) == null))
             {
                 if (!dic.ContainsKey(prop.Name))
                 {

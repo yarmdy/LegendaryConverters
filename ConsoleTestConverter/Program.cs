@@ -10,9 +10,9 @@ Console.WriteLine("Hello, World!");
 
 var converter = new DynamicDicToObjConverter();
 Dictionary<string, object?> dic = new Dictionary<string, object?> {
-    { "I1",1L},
+    { "I1","1"},
     { "I2",1L},
-    { "B1",true},
+    { "B1","true"},
     { "B2",true},
     { "TS1",TimeSpan.FromSeconds(10)},
     { "DT1",DateTime.Now},
